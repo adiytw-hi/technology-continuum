@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Technology Development & Adoption Continuum</title>
+<style>
+  :root{
+    --psut-navy:#0b235d;
+    --psut-teal:#08a7c6;
+    --psut-teal-dark:#0788a4;
+    --psut-gold:#f2c94c;
+    --ink:#10213d;
+    --muted:#66758a;
+    --grid:#d7e8f2;
+    --panel:#ffffff;
+    --soft:#f6fafc;
+    --border:#dbe7ee;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#fff;color:var(--ink);font-family:Aptos,Segoe UI,Arial,sans-serif}
+  body{min-height:100vh}
+  .app{width:min(1900px,100%);margin:0 auto;padding:24px 34px 28px}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:12px}
+  h1{margin:0;color:var(--psut-navy);font-size:clamp(34px,4.2vw,74px);line-height:1.02;font-weight:800;letter-spacing:-1.6px}
+  .subtitle{margin-top:12px;color:var(--muted);font-size:clamp(18px,2vw,32px);font-style:italic}
+  .brandline{height:5px;background:linear-gradient(90deg,var(--psut-teal) 0 78%,var(--psut-gold) 78% 100%);border-radius:99px;margin:12px 0 18px}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center;padding-top:5px}
+  button,select{font:inherit}
+  .btn,.preset{
+    border:1px solid var(--border);background:#fff;color:var(--psut-navy);padding:10px 14px;border-radius:12px;
+    min-height:44px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(11,35,93,.06)
+  }
+  .btn:hover,.preset:hover{border-color:#a8cbd8;background:#f7fcfe}
+  .btn.primary{background:var(--psut-navy);color:#fff;border-color:var(--psut-navy)}
+  .btn:focus-visible,.preset:focus-visible,input:focus-visible{outline:3px solid rgba(8,167,198,.28);outline-offset:2px}
+
+  .main-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:stretch}
+  .chart-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 16px 8px;min-width:0;position:relative}
+  .chart-wrap{width:100%;aspect-ratio:16/6.5;min-height:420px}
+  svg{width:100%;height:100%;display:block;touch-action:none;user-select:none}
+  .gridline{stroke:var(--grid);stroke-width:1}
+  .axis{stroke:#77808a;stroke-width:1.4}
+  .curve{fill:none;stroke:var(--psut-teal);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .curve-shadow{fill:none;stroke:rgba(8,167,198,.11);stroke-width:16;stroke-linecap:round;stroke-linejoin:round}
+  .stage-dot{fill:var(--psut-teal);stroke:#fff;stroke-width:4;cursor:ns-resize;filter:drop-shadow(0 3px 5px rgba(0,0,0,.14))}
+  .stage-dot.selected{fill:var(--psut-navy);stroke:var(--psut-gold);stroke-width:5}
+  .label{font-size:19px;fill:var(--psut-navy);font-weight:700;text-anchor:middle}
+  .ylabel{font-size:16px;fill:var(--muted);font-weight:600;text-anchor:middle}
+  .tick{font-size:14px;fill:var(--muted);text-anchor:end}
+  .value-pill{fill:var(--psut-navy)}
+  .value-text{fill:#fff;font-size:14px;font-weight:800;text-anchor:middle;pointer-events:none}
+  .hit{fill:transparent;cursor:ns-resize}
+  .instruction{position:absolute;right:22px;top:16px;font-size:14px;color:var(--muted);background:rgba(255,255,255,.92);padding:7px 10px;border-radius:999px;border:1px solid var(--border)}
+
+  .side{display:flex;flex-direction:column;gap:12px}
+  .panel{border:1px solid var(--border);border-radius:18px;padding:16px;background:var(--panel)}
+  .panel h2{font-size:18px;margin:0 0 10px;color:var(--psut-navy)}
+  .big-value{font-size:46px;font-weight:850;color:var(--psut-teal);line-height:1;margin:2px 0 6px}
+  .selected-name{font-size:21px;font-weight:800;color:var(--psut-navy)}
+  .note{font-size:14px;line-height:1.45;color:#53657c;margin-top:8px;min-height:62px}
+  .range-row{display:grid;grid-template-columns:1fr 62px;gap:10px;align-items:center;margin-top:12px}
+  input[type="range"]{width:100%;accent-color:var(--psut-teal);min-height:30px}
+  input[type="number"]{width:62px;border:1px solid var(--border);border-radius:10px;padding:8px 6px;text-align:center;font-weight:700;color:var(--psut-navy)}
+  .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .preset{padding:9px 10px;font-size:13px}
+  .legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:10px 4px 0}
+  .legend b{color:var(--psut-navy)}
+  .kbd{display:inline-block;border:1px solid #cfdbe2;border-bottom-width:2px;border-radius:5px;padding:1px 5px;background:#fff;color:#445568;font-size:12px}
+
+  .focus-mode .side,.focus-mode .toolbar,.focus-mode .instruction{display:none}
+  .focus-mode .main-grid{grid-template-columns:1fr}
+  .focus-mode .chart-card{border:none;padding:4px 8px}
+  .focus-mode .app{padding:18px 26px}
+  .focus-mode .chart-wrap{min-height:620px;aspect-ratio:16/7}
+
+  .footer-tip{margin-top:10px;font-size:13px;color:var(--muted)}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media (max-width:1000px){
+    .main-grid{grid-template-columns:1fr}
+    .side{display:grid;grid-template-columns:1fr 1fr}
+    .chart-wrap{min-height:380px}
+  }
+  @media (max-width:650px){
+    .app{padding:16px 12px 22px}
+    header{display:block}
+    .toolbar{justify-content:flex-start;margin-top:12px}
+    .side{grid-template-columns:1fr}
+    .chart-wrap{min-height:360px;overflow-x:auto}
+    svg{min-width:760px}
+  }
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <header>
+    <div>
+      <h1>Technology Development &amp; Adoption Continuum</h1>
+      <div class="subtitle">Drag any point to change its reliance level in real time</div>
+    </div>
+    <div class="toolbar" aria-label="Chart controls">
+      <button class="btn" id="focusBtn" type="button">Focus mode</button>
+      <button class="btn" id="resetBtn" type="button">Reset</button>
+      <button class="btn primary" id="randomBtn" type="button">Class challenge</button>
+    </div>
+  </header>
+  <div class="brandline"></div>
+
+  <section class="main-grid">
+    <div class="chart-card">
+      <div class="instruction">Drag ↑ ↓ • click a point for notes</div>
+      <div class="chart-wrap">
+        <svg id="chart" viewBox="0 0 1500 620" role="img" aria-labelledby="chartTitle chartDesc">
+          <title id="chartTitle">Interactive technology development and adoption continuum</title>
+          <desc id="chartDesc">Seven draggable stages from Idea through Legacy, each with a reliance percentage from zero to one hundred.</desc>
+          <g id="grid"></g>
+          <path id="shadowPath" class="curve-shadow"></path>
+          <path id="curvePath" class="curve"></path>
+          <g id="points"></g>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><b>Teaching move:</b> drag a point, then ask what organizational factor could explain the change.</span>
+        <span><span class="kbd">←</span><span class="kbd">→</span> select stage</span>
+        <span><span class="kbd">↑</span><span class="kbd">↓</span> change value</span>
+      </div>
+    </div>
+
+    <aside class="side">
+      <section class="panel" aria-live="polite">
+        <h2>Selected stage</h2>
+        <div class="selected-name" id="selectedName">Idea</div>
+        <div class="big-value"><span id="selectedValue">0</span>%</div>
+        <div class="note" id="selectedNote"></div>
+        <div class="range-row">
+          <label class="sr-only" for="stageRange">Reliance percentage</label>
+          <input id="stageRange" type="range" min="0" max="100" step="1" value="0" />
+          <label class="sr-only" for="stageNumber">Reliance percentage number</label>
+          <input id="stageNumber" type="number" min="0" max="100" step="1" value="0" />
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Scenario presets</h2>
+        <div class="presets">
+          <button class="preset" type="button" data-preset="baseline">Baseline</button>
+          <button class="preset" type="button" data-preset="rapid">Rapid adoption</button>
+          <button class="preset" type="button" data-preset="hype">Hype → decline</button>
+          <button class="preset" type="button" data-preset="failed">Fails to scale</button>
+          <button class="preset" type="button" data-preset="legacy">Legacy dependence</button>
+          <button class="preset" type="button" data-preset="flat">No adoption</button>
+        </div>
+        <div class="footer-tip">Tip: in PowerPoint, use the interactive page full-screen inside a web viewer, or open it in a browser and press F11.</div>
+      </section>
+    </aside>
+  </section>
+</main>
+
+<script>
+(() => {
+  const stages = [
+    {name:'Idea', note:'A concept exists, but the organization is not yet operationally dependent on it.'},
+    {name:'Research', note:'Evidence is being gathered. Technical feasibility and strategic fit are still uncertain.'},
+    {name:'Prototype', note:'A working proof exists. Learning is high, but reliance should still be limited.'},
+    {name:'Pilot', note:'The technology is tested in a controlled real setting. Value, risk, and readiness are examined.'},
+    {name:'Adoption', note:'The technology enters normal operations. Processes, roles, and expectations begin to change.'},
+    {name:'Scale', note:'Use expands across teams, locations, or customers. Governance, standards, cost, and resilience become critical.'},
+    {name:'Legacy', note:'The technology may be old, but dependency can remain high because systems, data, and routines are built around it.'}
+  ];
+
+  const presets = {
+    baseline:[0,3,8,20,50,85,70],
+    rapid:[0,8,22,48,72,92,82],
+    hype:[1,12,45,78,60,36,18],
+    failed:[0,5,16,38,45,27,10],
+    legacy:[0,4,10,24,54,78,94],
+    flat:[0,1,3,6,8,7,5]
+  };
+
+  let values = [...presets.baseline];
+  let selected = 0;
+  let dragging = null;
+  const svg = document.getElementById('chart');
+  const grid = document.getElementById('grid');
+  const pointsG = document.getElementById('points');
+  const curvePath = document.getElementById('curvePath');
+  const shadowPath = document.getElementById('shadowPath');
+  const app = document.getElementById('app');
+  const selectedName = document.getElementById('selectedName');
+  const selectedValue = document.getElementById('selectedValue');
+  const selectedNote = document.getElementById('selectedNote');
+  const range = document.getElementById('stageRange');
+  const number = document.getElementById('stageNumber');
+
+  const dims = {left:95, right:40, top:55, bottom:95, width:1500, height:620};
+  const plotW = dims.width - dims.left - dims.right;
+  const plotH = dims.height - dims.top - dims.bottom;
+  const xs = stages.map((_,i)=>dims.left + (plotW/(stages.length-1))*i);
+  const y = v => dims.top + plotH*(1-v/100);
+  const valueFromY = py => Math.max(0, Math.min(100, Math.round((1-(py-dims.top)/plotH)*100)));
+
+  function svgEl(tag, attrs={}){
+    const e=document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));
+    return e;
+  }
+
+  function buildGrid(){
+    grid.innerHTML='';
+    for(let t=0;t<=100;t+=10){
+      const yy=y(t);
+      grid.appendChild(svgEl('line',{x1:dims.left,y1:yy,x2:dims.width-dims.right,y2:yy,class:'gridline'}));
+      const tx=svgEl('text',{x:dims.left-16,y:yy+5,class:'tick'}); tx.textContent=t+'%'; grid.appendChild(tx);
+    }
+    grid.appendChild(svgEl('line',{x1:dims.left,y1:dims.top,x2:dims.left,y2:dims.top+plotH,class:'axis'}));
+    grid.appendChild(svgEl('line',{x1:dims.left,y1:dims.top+plotH,x2:dims.width-dims.right,y2:dims.top+plotH,class:'axis'}));
+    const yl=svgEl('text',{x:30,y:dims.top+plotH/2,class:'ylabel',transform:`rotate(-90 30 ${dims.top+plotH/2})`});
+    yl.textContent='Reliance on technology'; grid.appendChild(yl);
+    stages.forEach((s,i)=>{
+      const tx=svgEl('text',{x:xs[i],y:dims.top+plotH+48,class:'label'}); tx.textContent=s.name; grid.appendChild(tx);
+      grid.appendChild(svgEl('line',{x1:xs[i],y1:dims.top+plotH,x2:xs[i],y2:dims.top+plotH+10,class:'axis'}));
+    });
+  }
+
+  function smoothPath(coords){
+    if(coords.length<2) return '';
+    let d=`M ${coords[0][0]} ${coords[0][1]}`;
+    for(let i=0;i<coords.length-1;i++){
+      const p0=coords[i-1]||coords[i];
+      const p1=coords[i];
+      const p2=coords[i+1];
+      const p3=coords[i+2]||p2;
+      const c1x=p1[0]+(p2[0]-p0[0])/6;
+      const c1y=p1[1]+(p2[1]-p0[1])/6;
+      const c2x=p2[0]-(p3[0]-p1[0])/6;
+      const c2y=p2[1]-(p3[1]-p1[1])/6;
+      d+=` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`;
+    }
+    return d;
+  }
+
+  function render(){
+    const coords=values.map((v,i)=>[xs[i],y(v)]);
+    const d=smoothPath(coords);
+    curvePath.setAttribute('d',d); shadowPath.setAttribute('d',d);
+    pointsG.innerHTML='';
+    stages.forEach((s,i)=>{
+      const yy=y(values[i]);
+      const g=svgEl('g',{'data-index':i,tabindex:'0',role:'slider','aria-valuemin':'0','aria-valuemax':'100','aria-valuenow':values[i],'aria-label':`${s.name}: ${values[i]} percent reliance`});
+      const hit=svgEl('circle',{cx:xs[i],cy:yy,r:24,class:'hit'});
+      const dot=svgEl('circle',{cx:xs[i],cy:yy,r:11,class:'stage-dot'+(i===selected?' selected':'')});
+      const pill=svgEl('rect',{x:xs[i]-26,y:yy-48,width:52,height:27,rx:13,class:'value-pill'});
+      const txt=svgEl('text',{x:xs[i],y:yy-30,class:'value-text'}); txt.textContent=values[i]+'%';
+      g.append(hit,pill,txt,dot);
+      g.addEventListener('pointerdown',ev=>startDrag(ev,i));
+      g.addEventListener('click',()=>selectStage(i));
+      g.addEventListener('keydown',ev=>{
+        if(ev.key==='ArrowUp'||ev.key==='ArrowDown'){
+          ev.preventDefault(); selectStage(i); changeValue(i,values[i]+(ev.key==='ArrowUp'?1:-1));
+        }
+      });
+      pointsG.appendChild(g);
+    });
+    updateSide();
+  }
+
+  function selectStage(i){selected=i; render();}
+  function updateSide(){
+    selectedName.textContent=stages[selected].name;
+    selectedValue.textContent=values[selected];
+    selectedNote.textContent=stages[selected].note;
+    range.value=values[selected]; number.value=values[selected];
+  }
+  function changeValue(i,v){values[i]=Math.max(0,Math.min(100,Math.round(Number(v)||0)));render();}
+
+  function clientToSvgY(ev){
+    const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+    const out=pt.matrixTransform(svg.getScreenCTM().inverse()); return out.y;
+  }
+  function startDrag(ev,i){
+    ev.preventDefault(); dragging=i; selected=i; svg.setPointerCapture?.(ev.pointerId);
+    changeValue(i,valueFromY(clientToSvgY(ev)));
+  }
+  svg.addEventListener('pointermove',ev=>{if(dragging!==null) changeValue(dragging,valueFromY(clientToSvgY(ev)));});
+  svg.addEventListener('pointerup',()=>dragging=null);
+  svg.addEventListener('pointercancel',()=>dragging=null);
+
+  range.addEventListener('input',()=>changeValue(selected,range.value));
+  number.addEventListener('input',()=>changeValue(selected,number.value));
+  document.getElementById('resetBtn').addEventListener('click',()=>{values=[...presets.baseline];selected=0;render();});
+  document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{values=[...presets[b.dataset.preset]];selected=0;render();}));
+  document.getElementById('focusBtn').addEventListener('click',ev=>{
+    app.classList.toggle('focus-mode');
+    ev.currentTarget.textContent=app.classList.contains('focus-mode')?'Exit focus':'Focus mode';
+  });
+  document.getElementById('randomBtn').addEventListener('click',()=>{
+    values=values.map((v,i)=>i===0?Math.floor(Math.random()*8):Math.max(0,Math.min(100,v+Math.floor(Math.random()*41)-20)));
+    selected=Math.floor(Math.random()*stages.length); render();
+  });
+  document.addEventListener('keydown',ev=>{
+    if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)) return;
+    if(ev.key==='ArrowLeft'){ev.preventDefault();selected=(selected+stages.length-1)%stages.length;render();}
+    if(ev.key==='ArrowRight'){ev.preventDefault();selected=(selected+1)%stages.length;render();}
+    if(ev.key==='ArrowUp'){ev.preventDefault();changeValue(selected,values[selected]+1);}
+    if(ev.key==='ArrowDown'){ev.preventDefault();changeValue(selected,values[selected]-1);}
+  });
+
+  buildGrid(); render();
+})();
+</script>
+</body>
+</html>
